@@ -18,7 +18,7 @@ println """\
          reference sequences (--refseq)      : ${params.refseq}
          outdir (--out)                      : ${params.out}
          Mash Genome Reference (--genome_db) : ${params.genome_db}
-         Max threads per process (--thread)  : ${params.thread}
+         Max threads per process (--thread)  : ${params.threads}
          size cutoff (--sizefilter)          : ${params.sizefilter}
          """
          .stripIndent()
@@ -209,7 +209,7 @@ process roary {
     //errorStrategy 'ignore'
     publishDir params.out, mode: 'copy', overwrite: true
 
-    cpus params.thread
+    cpus params.threads
 
     input:
     file gff1 from prokka_fasta_output.collect()
@@ -219,7 +219,7 @@ process roary {
     path("*") into roary_output
 
     """
-    roary -f . -e -n -v -r *.gff -p ${params.thread}
+    roary -f . -e -n -v -r *.gff -p ${params.threads}
     """
 }
 
