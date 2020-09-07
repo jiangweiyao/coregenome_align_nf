@@ -53,7 +53,7 @@ process fastqc {
 
 process multiqc {
 
-    //errorStrategy 'ignore'
+    errorStrategy 'ignore'
     publishDir params.out, mode: 'copy', overwrite: true
 
     input:
@@ -139,7 +139,7 @@ process assembly {
 
     //errorStrategy 'ignore'
     //publishDir params.out, mode: 'copy', overwrite: true
-    memory '16 GB'
+    memory '8 GB'
 
     input:
     tuple val(name), file(fastq) from trimmed_fastq
@@ -148,7 +148,7 @@ process assembly {
     tuple val(name), path("*_scaffolds.fasta") into assembly_output
 
     """
-    spades.py -1 ${fastq[0]} -2 ${fastq[1]} -o ${name} -m 16 -t 1
+    spades.py -1 ${fastq[0]} -2 ${fastq[1]} -o ${name} -m 8 -t 1
     cp ${name}/scaffolds.fasta ${name}_scaffolds.fasta
     """
 }
@@ -190,7 +190,7 @@ process busco {
 process prokka_assembly {
 
     //errorStrategy 'ignore'
-    publishDir params.out, mode: 'copy', overwrite: true
+    //publishDir params.out, mode: 'copy', overwrite: true
 
     input:
     tuple val(name), file(assembly) from assembly_filter_output
@@ -209,6 +209,7 @@ process roary {
     //errorStrategy 'ignore'
     publishDir params.out, mode: 'copy', overwrite: true
 
+    memory '16 GB'
     cpus params.threads
 
     input:
@@ -223,20 +224,21 @@ process roary {
     """
 }
 
-process fasttree {
+process raxmlng {
 
     //errorStrategy 'ignore'
     publishDir params.out, mode: 'copy', overwrite: true
 
     memory '16 GB'
+    cpus params.threads
 
     input:
     file roary_output from roary_output
 
     output:
-    path("*.newick") into fasttree_output
+    path("core_gene.raxml*") into raxml_output
 
     """
-    FastTree -nt -gtr core_gene_alignment.aln > core_genome.newick
+    raxml-ng --msa core_gene_alignment.aln --model GTR+G --prefix core_gene --threads ${params.threads} --seed 1234 
     """
 }
