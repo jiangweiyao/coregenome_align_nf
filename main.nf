@@ -81,7 +81,7 @@ process mash_screen_genome {
     tuple val(name), path("*_pathogen_id_raw.out") into mash_screen_genome_out
 
     """
-    cat ${fastq} | mash screen -w ${mash_genome_db} - | sort -gr > ${name}_pathogen_id_raw.out
+    cat ${fastq} | mash screen ${mash_genome_db} - | sort -gr > ${name}_pathogen_id_raw.out
     """
 }
 
@@ -97,14 +97,14 @@ process tabulate_mash_genome {
     path "*_pathogen_id.out" into tabulate_mash_genome_out
 
     """
-    python3 ${mash_parser} -i ${table} -o ${name}_pathogen_id.out
+    python3 ${mash_parser} -i ${table} -o ${name}_pathogen_id.out -n ${params.mashtopn}
     """
 }
 
 process prokka_fasta {
 
     //errorStrategy 'ignore'
-    publishDir params.out, mode: 'copy', overwrite: true
+    //publishDir params.out, mode: 'copy', overwrite: true
 
     input:
     file(fasta) from refseq_files
@@ -139,7 +139,7 @@ process assembly {
 
     //errorStrategy 'ignore'
     //publishDir params.out, mode: 'copy', overwrite: true
-    memory '8 GB'
+    memory '16 GB'
 
     input:
     tuple val(name), file(fastq) from trimmed_fastq
@@ -179,7 +179,7 @@ process busco {
     tuple val(name), file(assembly) from assembly_filter_output2
 
     output:
-    path("*") into busco_output
+    path("*/short_summary*.txt") into busco_output
 
     """
     busco --auto-lineage-prok -f -m geno -o ${name}_busco -i ${assembly} --config ${busco_config} -c 1
@@ -213,8 +213,7 @@ process roary {
     cpus params.threads
 
     input:
-    file gff1 from prokka_fasta_output.collect()
-    file gff2 from prokka_assembly_output.collect()
+    file gff from prokka_fasta_output.mix(prokka_assembly_output).collect()
 
     output:
     path("*") into roary_output
