@@ -8,7 +8,6 @@ adapters = file(params.adapters)
 phix = file(params.phix)
 mash_genome_db = file(params.genome_db)
 
-busco_config = file("$baseDir/db/busco_config.ini")
 mash_parser = file("$baseDir/bin/mash_screen_parser.py")
 
 println """\
