@@ -185,7 +185,7 @@ process busco {
     path("*/short_summary*.txt") into busco_output
 
     """
-    busco --auto-lineage-prok -f -m geno -o ${name}_busco -i ${assembly} --config ${busco_config} -c 1
+    busco --auto-lineage-prok -f -m geno -o ${name}_busco -i ${assembly} -c 1
     """
 }
 
