@@ -139,7 +139,10 @@ process assembly {
 
     //errorStrategy 'ignore'
     //publishDir params.out, mode: 'copy', overwrite: true
-    memory '16 GB'
+    errorStrategy  { task.attempt <= maxRetries  ? 'retry' : 'ignore' }
+    maxRetries 3
+
+    memory { 4.GB * task.attempt * task.attempt }
 
     input:
     tuple val(name), file(fastq) from trimmed_fastq
