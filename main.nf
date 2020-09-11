@@ -105,6 +105,8 @@ process prokka_fasta {
     //errorStrategy 'ignore'
     //publishDir params.out, mode: 'copy', overwrite: true
 
+    cpus params.thread
+
     input:
     file(fasta) from refseq_files
 
@@ -112,7 +114,7 @@ process prokka_fasta {
     path("*.gff") into prokka_fasta_output
 
     """
-    prokka --cpus 1 --outdir ${fasta.simpleName}_prokka --prefix ${fasta.simpleName} ${fasta}
+    prokka --cpus ${params.thread} --outdir ${fasta.simpleName}_prokka --prefix ${fasta.simpleName} ${fasta}
     cp ${fasta.simpleName}_prokka/${fasta.simpleName}.gff ./
     """
 }
@@ -141,7 +143,8 @@ process assembly {
     errorStrategy  { task.attempt <= maxRetries  ? 'retry' : 'ignore' }
     maxRetries 3
 
-    memory { 4.GB * task.attempt * task.attempt }
+    memory { 4.GB * params.thread * task.attempt * task.attempt }
+    cpus params.thread
 
     input:
     tuple val(name), file(fastq) from trimmed_fastq
@@ -150,7 +153,7 @@ process assembly {
     tuple val(name), path("*_scaffolds.fasta") into assembly_output
 
     """
-    spades.py -1 ${fastq[0]} -2 ${fastq[1]} -o ${name} -m 8 -t 1
+    spades.py -1 ${fastq[0]} -2 ${fastq[1]} -o ${name} -t ${params.thread}
     cp ${name}/scaffolds.fasta ${name}_scaffolds.fasta
     """
 }
@@ -194,6 +197,8 @@ process prokka_assembly {
     //errorStrategy 'ignore'
     //publishDir params.out, mode: 'copy', overwrite: true
 
+    cpus params.thread
+
     input:
     tuple val(name), file(assembly) from assembly_filter_output
 
@@ -201,7 +206,7 @@ process prokka_assembly {
     tuple val(name), path("*.gff") into prokka_assembly_output
 
     """
-    prokka --cpus 1 --outdir ${name}_prokka --prefix ${name} ${assembly}
+    prokka --cpus ${params.thread} --outdir ${name}_prokka --prefix ${name} ${assembly}
     cp ${name}_prokka/${name}.gff ./
     """
 }
@@ -211,8 +216,8 @@ process roary {
     //errorStrategy 'ignore'
     publishDir params.out, mode: 'copy', overwrite: true
 
-    memory '16 GB'
-    cpus params.threads
+    memory { 2.GB * params.roarythread }
+    cpus params.roarythread
 
     input:
     file gff from prokka_fasta_output.mix(prokka_assembly_output).collect()
@@ -221,7 +226,7 @@ process roary {
     path("*") into roary_output
 
     """
-    roary -f . -e -n -v -r *.gff -p ${params.threads}
+    roary -f . -e -n -v -r *.gff -p ${params.roarythread}
     """
 }
 
@@ -231,7 +236,7 @@ process raxmlng {
     publishDir params.out, mode: 'copy', overwrite: true
 
     memory '16 GB'
-    cpus params.threads
+    cpus params.thread
 
     input:
     file roary_output from roary_output
@@ -240,6 +245,6 @@ process raxmlng {
     path("core_gene.raxml*") into raxml_output
 
     """
-    raxml-ng --msa core_gene_alignment.aln --model GTR+G --prefix core_gene --threads ${params.threads} --seed 1234 
+    raxml-ng --msa core_gene_alignment.aln --model GTR+G --prefix core_gene --threads ${params.thread} --seed 1234 
     """
 }
