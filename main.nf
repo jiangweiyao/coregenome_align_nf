@@ -17,7 +17,7 @@ println """\
          reference sequences (--refseq)      : ${params.refseq}
          outdir (--out)                      : ${params.out}
          Mash Genome Reference (--genome_db) : ${params.genome_db}
-         Max threads per process (--thread)  : ${params.threads}
+         Max threads per process (--thread)  : ${params.thread}
          size cutoff (--sizefilter)          : ${params.sizefilter}
          """
          .stripIndent()
