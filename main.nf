@@ -153,9 +153,10 @@ process assembly {
     tuple val(name), path("*_scaffolds.fasta") into assembly_output
 
     """
-    spades.py -1 ${fastq[0]} -2 ${fastq[1]} -o ${name} -t ${params.thread}
+    spades.py -1 ${fastq[0]} -2 ${fastq[1]} -o ${name} -t ${params.thread} -m \$((4 * $params.thread * $task.attempt * $task.attempt))
     cp ${name}/scaffolds.fasta ${name}_scaffolds.fasta
     """
+
 }
 
 process bbmap_size_filter {
